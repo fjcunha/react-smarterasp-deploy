@@ -1,0 +1,27 @@
+image: node:18
+
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build & Deploy React App via FTP
+          caches:
+            - node
+          script:
+            # Install dependencies
+            - npm ci
+
+            # Build React app
+            - npm run build
+
+            # Install FTP client
+            - apt-get update && apt-get install -y lftp
+
+            # Upload build files to server
+            - lftp -c "
+              open -u $FTP_USER,$FTP_PASS $FTP_HOST;
+              set ftp:ssl-allow no;
+              set ftp:use-site-chmod no;
+              set ftp:chmod no;
+              mirror -R --delete --no-perms --verbose dist $FTP_PATH
+              "
